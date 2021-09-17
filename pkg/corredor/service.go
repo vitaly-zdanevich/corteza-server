@@ -3,6 +3,7 @@ package corredor
 import (
 	"context"
 	"fmt"
+	"github.com/cortezaproject/corteza-server/store"
 	"strings"
 	"sync"
 	"time"
@@ -104,7 +105,8 @@ type (
 	}
 
 	authTokenMaker interface {
-		Encode(auth.Identifiable, ...string) string
+		auth.TokenEncoder
+		auth.TokenGenerator
 	}
 )
 
@@ -116,6 +118,11 @@ const (
 )
 
 var (
+	// DefaultStore is an interface to storage backend(s)
+	// ng (next-gen) is a temporary prefix
+	// so that we can differentiate between it and the file-only store
+	DefaultStore store.Storer
+
 	// Global corredor service
 	gCorredor *service
 
@@ -180,10 +187,14 @@ func NewService(logger *zap.Logger, opt options.CorredorOpt) *service {
 	}
 }
 
-func (svc *service) Connect(ctx context.Context) (err error) {
+func (svc *service) Connect(ctx context.Context, s store.Storer) (err error) {
 	if !svc.opt.Enabled {
 		return
 	}
+
+	// we're doing conversion to avoid having
+	// store interface exposed or generated inside app package
+	DefaultStore = s
 
 	if err = svc.connect(ctx); err != nil {
 		return
@@ -653,6 +664,8 @@ func (svc service) exec(ctx context.Context, script string, runAs string, args S
 			zap.String("eventType", args.EventType()),
 			zap.String("resourceType", args.ResourceType()),
 		)
+
+		token string
 	)
 
 	log.Debug("triggered")
@@ -716,7 +729,13 @@ func (svc service) exec(ctx context.Context, script string, runAs string, args S
 			return
 		}
 
-		if err = encodeArguments(req.Args, "authToken", svc.authTokenMaker.Encode(definer)); err != nil {
+		// Generate and save the token
+		token, err = svc.authTokenMaker.Generate(ctx, DefaultStore, definer)
+		if err != nil {
+			return
+		}
+
+		if err = encodeArguments(req.Args, "authToken", token); err != nil {
 			return
 		}
 
@@ -728,7 +747,13 @@ func (svc service) exec(ctx context.Context, script string, runAs string, args S
 			return
 		}
 
-		if err = encodeArguments(req.Args, "authToken", svc.authTokenMaker.Encode(invoker)); err != nil {
+		// Generate and save the token
+		token, err = svc.authTokenMaker.Generate(ctx, DefaultStore, invoker)
+		if err != nil {
+			return
+		}
+
+		if err = encodeArguments(req.Args, "authToken", token); err != nil {
 			return
 		}
 	}

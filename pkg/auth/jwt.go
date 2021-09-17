@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"github.com/cortezaproject/corteza-server/system/types"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,6 +20,11 @@ type (
 		// Expiration time in minutes
 		expiry    time.Duration
 		tokenAuth *jwtauth.JWTAuth
+	}
+
+	tokenStore interface {
+		CreateAuthOa2token(ctx context.Context, rr ...*types.AuthOa2token) error
+		UpsertAuthConfirmedClient(ctx context.Context, rr ...*types.AuthConfirmedClient) error
 	}
 )
 
@@ -88,7 +94,6 @@ func (t *token) Encode(i Identifiable, scope ...string) string {
 }
 
 func (t *token) encode(i Identifiable, clientID uint64, scope ...string) string {
-
 	roles := ""
 	for _, r := range i.Roles() {
 		roles += fmt.Sprintf(" %d", r)

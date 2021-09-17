@@ -332,7 +332,7 @@ func (app *CortezaApp) InitServices(ctx context.Context) (err error) {
 	ctx = actionlog.RequestOriginToContext(ctx, actionlog.RequestOrigin_APP_Init)
 	defer sentry.Recover()
 
-	if err = corredor.Service().Connect(ctx); err != nil {
+	if err = corredor.Service().Connect(ctx, app.Store); err != nil {
 		return
 	}
 
