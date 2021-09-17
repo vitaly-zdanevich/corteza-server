@@ -61,40 +61,40 @@ func NewRedirection() (e *redirection) {
 	return
 }
 
-func (h redirection) String() string {
-	return fmt.Sprintf("apigw filter %s (%s)", h.Name, h.Label)
+func (r redirection) String() string {
+	return fmt.Sprintf("apigw filter %s (%s)", r.Name, r.Label)
 }
 
-func (h redirection) Meta() types.FilterMeta {
-	return h.FilterMeta
+func (r redirection) Meta() types.FilterMeta {
+	return r.FilterMeta
 }
 
-func (h redirection) Weight() int {
-	return h.Wgt
+func (r redirection) Weight() int {
+	return r.Wgt
 }
 
-func (h *redirection) Merge(params []byte) (types.Handler, error) {
-	err := json.NewDecoder(bytes.NewBuffer(params)).Decode(&h.params)
+func (r *redirection) Merge(params []byte) (types.Handler, error) {
+	err := json.NewDecoder(bytes.NewBuffer(params)).Decode(&r.params)
 
-	loc, err := url.ParseRequestURI(h.params.Location)
+	loc, err := url.ParseRequestURI(r.params.Location)
 
 	if err != nil {
 		return nil, fmt.Errorf("could not validate parameters, invalid URL: %s", err)
 	}
 
-	if !checkStatus("redirect", h.params.HTTPStatus) {
-		return nil, fmt.Errorf("could not validate parameters, wrong status %d", h.params.HTTPStatus)
+	if !checkStatus("redirect", r.params.HTTPStatus) {
+		return nil, fmt.Errorf("could not validate parameters, wrong status %d", r.params.HTTPStatus)
 	}
 
-	h.location = loc
-	h.status = h.params.HTTPStatus
+	r.location = loc
+	r.status = r.params.HTTPStatus
 
-	return h, err
+	return r, err
 }
 
-func (h redirection) Handler() types.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request) error {
-		http.Redirect(rw, r, h.location.String(), h.status)
+func (r redirection) Handler() types.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) error {
+		http.Redirect(rw, req, r.location.String(), r.status)
 		return nil
 	}
 }
@@ -109,19 +109,19 @@ func NewDefaultJsonResponse() (e *defaultJsonResponse) {
 	return
 }
 
-func (h defaultJsonResponse) String() string {
-	return fmt.Sprintf("apigw filter %s (%s)", h.Name, h.Label)
+func (j defaultJsonResponse) String() string {
+	return fmt.Sprintf("apigw filter %s (%s)", j.Name, j.Label)
 }
 
-func (h defaultJsonResponse) Meta() types.FilterMeta {
-	return h.FilterMeta
+func (j defaultJsonResponse) Meta() types.FilterMeta {
+	return j.FilterMeta
 }
 
-func (f *defaultJsonResponse) Merge(params []byte) (h types.Handler, err error) {
-	return f, err
+func (j *defaultJsonResponse) Merge(params []byte) (h types.Handler, err error) {
+	return j, err
 }
 
-func (h defaultJsonResponse) Handler() types.HandlerFunc {
+func (j defaultJsonResponse) Handler() types.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) error {
 		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusAccepted)
