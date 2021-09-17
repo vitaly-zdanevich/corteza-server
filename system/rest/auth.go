@@ -13,13 +13,8 @@ import (
 var _ = errors.Wrap
 
 type (
-	tokenHandler interface {
-		auth.TokenEncoder
-		auth.TokenGenerator
-	}
-
 	Auth struct {
-		tokenHandler tokenHandler
+		tokenHandler auth.TokenGenerator
 		settings     *types.AppSettings
 		authSvc      authUserService
 	}
@@ -75,7 +70,7 @@ func (ctrl *Auth) makePayload(ctx context.Context, user *types.User) (*authUserR
 	}
 
 	// Generate and save the token
-	t, err := ctrl.tokenHandler.Generate(ctx, service.DefaultStore, user)
+	t, err := ctrl.tokenHandler.Generate(ctx, user)
 	if err != nil {
 		return nil, nil
 	}

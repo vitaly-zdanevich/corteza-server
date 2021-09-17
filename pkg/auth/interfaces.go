@@ -19,7 +19,7 @@ type (
 	}
 
 	TokenGenerator interface {
-		Generate(ctx context.Context, s tokenStore, identity Identifiable) (string, error)
+		Generate(ctx context.Context, identity Identifiable) (string, error)
 	}
 
 	TokenHandler interface {

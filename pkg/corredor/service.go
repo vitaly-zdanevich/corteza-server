@@ -3,7 +3,6 @@ package corredor
 import (
 	"context"
 	"fmt"
-	"github.com/cortezaproject/corteza-server/store"
 	"strings"
 	"sync"
 	"time"
@@ -118,11 +117,6 @@ const (
 )
 
 var (
-	// DefaultStore is an interface to storage backend(s)
-	// ng (next-gen) is a temporary prefix
-	// so that we can differentiate between it and the file-only store
-	DefaultStore store.Storer
-
 	// Global corredor service
 	gCorredor *service
 
@@ -187,14 +181,10 @@ func NewService(logger *zap.Logger, opt options.CorredorOpt) *service {
 	}
 }
 
-func (svc *service) Connect(ctx context.Context, s store.Storer) (err error) {
+func (svc *service) Connect(ctx context.Context) (err error) {
 	if !svc.opt.Enabled {
 		return
 	}
-
-	// we're doing conversion to avoid having
-	// store interface exposed or generated inside app package
-	DefaultStore = s
 
 	if err = svc.connect(ctx); err != nil {
 		return
@@ -730,7 +720,7 @@ func (svc service) exec(ctx context.Context, script string, runAs string, args S
 		}
 
 		// Generate and save the token
-		token, err = svc.authTokenMaker.Generate(ctx, DefaultStore, definer)
+		token, err = svc.authTokenMaker.Generate(ctx, definer)
 		if err != nil {
 			return
 		}
@@ -748,7 +738,7 @@ func (svc service) exec(ctx context.Context, script string, runAs string, args S
 		}
 
 		// Generate and save the token
-		token, err = svc.authTokenMaker.Generate(ctx, DefaultStore, invoker)
+		token, err = svc.authTokenMaker.Generate(ctx, invoker)
 		if err != nil {
 			return
 		}

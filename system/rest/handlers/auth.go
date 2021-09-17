@@ -12,6 +12,7 @@ import (
 	"context"
 	"github.com/cortezaproject/corteza-server/pkg/api"
 	"github.com/cortezaproject/corteza-server/system/rest/request"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-chi/chi"
 	"net/http"
 )
@@ -38,6 +39,7 @@ func NewAuth(h AuthAPI) *Auth {
 				return
 			}
 
+			spew.Dump(params)
 			value, err := h.Impersonate(r.Context(), params)
 			if err != nil {
 				api.Send(w, r, err)
